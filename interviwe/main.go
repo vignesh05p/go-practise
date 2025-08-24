@@ -3,23 +3,33 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 )
 
-func LoggingMiddleware(next http.Handler) http.Handler {
+// Logging middleware
+func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("Request Method: %s, URL: %s\n", r.Method, r.URL.Path)
-		next.ServeHTTP(w, r)
+		start := time.Now()
+		fmt.Println("Request started:", r.Method, r.URL.Path)
+
+		next.ServeHTTP(w, r) // call the next handler
+
+		fmt.Println("Request completed in:", time.Since(start))
 	})
 }
 
-func mainHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Hello! You reached the main handler.")
+// Main handler
+func helloHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello from Go!"))
 }
 
 func main() {
 	mux := http.NewServeMux()
-	mux.Handle("/", LoggingMiddleware(http.HandlerFunc(mainHandler)))
+	mux.HandleFunc("/", helloHandler)
 
-	fmt.Println("Server running at :8080")
-	http.ListenAndServe(":8080", mux)
+	// Wrap with middleware
+	wrapped := loggingMiddleware(mux)
+
+	fmt.Println("Server running on :8080")
+	http.ListenAndServe(":8080", wrapped)
 }
