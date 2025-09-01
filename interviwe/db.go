@@ -9,3 +9,12 @@ type db interface {
 type supabase struct {
 	db *sql.db
 }
+
+func (s supabase) insert(query string, args ...interface{}) error {
+	_, err := s.db.Exec(query, args...)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Supabase insert successful")
+	return nil
+}
